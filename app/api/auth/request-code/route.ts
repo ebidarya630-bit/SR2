@@ -8,6 +8,10 @@ export async function POST(request:Request){
   const body=await request.json();const email=String(body.email??"").trim().toLowerCase();
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return NextResponse.json({error:"Enter a valid email address."},{status:400});
   if(db.prepare("SELECT 1 FROM users WHERE email=?").get(email))return NextResponse.json({error:"This email is already registered."},{status:409});
+  const recent = db.prepare("SELECT count(*) AS n FROM email_verification_codes WHERE email=? AND purpose='register' AND created_at >= datetime('now','-1 hour')").get(email) as {n:number};
+  const last = db.prepare("SELECT created_at FROM email_verification_codes WHERE email=? AND purpose='register' ORDER BY created_at DESC LIMIT 1").get(email) as {created_at:string}|undefined;
+  if (recent.n >= 5) return NextResponse.json({error:"Too many verification requests. Try again in an hour."},{status:429});
+  if (last && Date.now() - new Date(last.created_at + " UTC").getTime() < 60_000) return NextResponse.json({error:"Please wait one minute before requesting another code."},{status:429});
   const apiKey=process.env.RESEND_API_KEY;const from=process.env.RESEND_FROM;
   if(!apiKey||!from)return NextResponse.json({error:"Email verification is not configured yet. Please try again later."},{status:503});
   const code=String(randomInt(0,1000000)).padStart(6,"0");const expires=new Date(Date.now()+10*60*1000).toISOString();
