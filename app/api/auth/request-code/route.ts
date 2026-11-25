@@ -26,6 +26,9 @@ export async function POST(request: Request) {
     });
     if (error) {
       const message = error.message.toLowerCase();
+      if (message.includes("duplicate key") || message.includes("profiles_username_key")) {
+        return NextResponse.json({ error: "That username is already in use. Choose another one." }, { status: 409 });
+      }
       if (message.includes("rate") || message.includes("limit")) {
         return NextResponse.json({ error: "Too many verification requests. Please try again later." }, { status: 429 });
       }
