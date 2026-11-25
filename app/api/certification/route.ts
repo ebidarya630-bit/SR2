@@ -50,7 +50,7 @@ export async function POST(request:Request){
   await batch(statements);
   return NextResponse.json({ok:true,applicationId:id,message:"Certification application submitted for review."});
  }catch(e){
-  if(uploaded.length)await bucket().delete(uploaded).catch(()=>undefined);
+  if(uploaded.length)await Promise.all(uploaded.map(key=>bucket().delete(key).catch(()=>undefined)));
   return NextResponse.json({error:e instanceof Error?e.message:"Unable to submit application."},{status:400});
  }
 }
