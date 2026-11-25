@@ -13,8 +13,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
     }
     const supabase = await createClient();
+    const redirectBase = process.env.APP_URL || new URL(request.url).origin;
+    const emailRedirectTo = new URL("/auth/callback", redirectBase).toString();
     if (resend) {
-      const { error } = await supabase.auth.resend({ type: "signup", email });
+      const { error } = await supabase.auth.resend({ type: "signup", email, options: { emailRedirectTo } });
       if (error) {
         const message = error.message.toLowerCase();
         if (message.includes("rate") || message.includes("limit")) {
@@ -34,7 +36,7 @@ export async function POST(request: Request) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { username, display_name: username } },
+      options: { data: { username, display_name: username }, emailRedirectTo },
     });
     if (error) {
       const message = error.message.toLowerCase();
