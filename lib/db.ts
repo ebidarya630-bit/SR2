@@ -18,7 +18,7 @@ function openDatabase() {
       is_blocked INTEGER NOT NULL DEFAULT 0, blocked_reason TEXT,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
-    CREATE TABLE IF NOT EXISTS brands (
+    CREATE TABLE IF NOT EXISTS email_verification_codes (\n      id TEXT PRIMARY KEY, email TEXT NOT NULL COLLATE NOCASE, purpose TEXT NOT NULL CHECK(purpose IN ('register','brand_email')),\n      code_hash TEXT NOT NULL, expires_at TEXT NOT NULL, attempts INTEGER NOT NULL DEFAULT 0,\n      consumed_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP\n    );\n    CREATE INDEX IF NOT EXISTS idx_email_codes_lookup ON email_verification_codes(email,purpose,created_at DESC);\n    CREATE TABLE IF NOT EXISTS brands (
       id TEXT PRIMARY KEY, owner_user_id TEXT NOT NULL REFERENCES users(id),
       legal_name TEXT NOT NULL, display_name TEXT NOT NULL, official_email TEXT NOT NULL,
       website_url TEXT, founded_on TEXT, bsc_code TEXT UNIQUE,
@@ -96,7 +96,7 @@ function openDatabase() {
     CREATE INDEX IF NOT EXISTS idx_applications_brand ON certification_applications(brand_id, created_at DESC);
     CREATE INDEX IF NOT EXISTS idx_tickets_creator ON support_tickets(created_by, created_at DESC);
   `);
-  db.prepare("INSERT OR IGNORE INTO site_settings(key,value) VALUES (?,?)").run("brand", JSON.stringify({name:"SR Certification",theme:"orange-light",default_locale:"en"}));
+  const brandColumns = db.prepare("PRAGMA table_info(brands)").all() as Array<{name:string}>;\n  if (!brandColumns.some(column => column.name === "logo_path")) db.exec("ALTER TABLE brands ADD COLUMN logo_path TEXT");\n  db.prepare("INSERT OR IGNORE INTO site_settings(key,value) VALUES (?,?)").run("brand", JSON.stringify({name:"SR Certification",theme:"orange-light",default_locale:"en"}));
   db.prepare("INSERT OR IGNORE INTO site_settings(key,value) VALUES (?,?)").run("support", JSON.stringify({email:"bscmailcode@gmail.com",hours:"10:00-22:00",timezone:"Asia/Tehran"}));
   return db;
 }
