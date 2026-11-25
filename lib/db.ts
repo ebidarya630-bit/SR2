@@ -55,6 +55,16 @@ function openDatabase() {
       archive_device_consent INTEGER NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
+    CREATE TABLE IF NOT EXISTS application_assets (
+      id TEXT PRIMARY KEY,
+      application_id TEXT NOT NULL REFERENCES certification_applications(id) ON DELETE CASCADE,
+      kind TEXT NOT NULL CHECK(kind IN ('video','evidence')),
+      storage_path TEXT NOT NULL,
+      original_name TEXT NOT NULL,
+      mime_type TEXT NOT NULL,
+      file_size INTEGER NOT NULL CHECK(file_size >= 0),
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
     CREATE TABLE IF NOT EXISTS certificates (
       id TEXT PRIMARY KEY, application_id TEXT NOT NULL UNIQUE REFERENCES certification_applications(id),
       brand_id TEXT NOT NULL REFERENCES brands(id), sr_code TEXT NOT NULL UNIQUE,
