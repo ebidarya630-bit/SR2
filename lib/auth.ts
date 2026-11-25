@@ -1,32 +1,35 @@
-import { cookies } from "next/headers";
-import { SignJWT, jwtVerify } from "jose";
-import { db } from "@/lib/db";
+import { createClient } from "@/lib/supabase/server";
 
-const COOKIE = "sr_session";
-function secret() {
-  const value = process.env.SESSION_SECRET;
-  if (!value || value.length < 32) throw new Error("SESSION_SECRET must be set to a random value of at least 32 characters.");
-  return new TextEncoder().encode(value);
-}
-export type SessionUser = { id: string; email: string; username: string; role: string; is_blocked: number };
-export async function createSession(user: {id:string;email:string;username:string;role:string}) {
-  const token = await new SignJWT({ email:user.email, username:user.username, role:user.role })
-    .setProtectedHeader({alg:"HS256"}).setSubject(user.id).setIssuedAt().setExpirationTime("7d").sign(secret());
-  const jar = await cookies();
-  jar.set(COOKIE, token, {httpOnly:true,secure:process.env.NODE_ENV==="production",sameSite:"lax",path:"/",maxAge:60*60*24*7});
-}
+export type SessionUser = {
+  id: string;
+  email: string;
+  username: string;
+  role: "user" | "brand" | "admin";
+  is_blocked: boolean;
+};
+
 export async function getSession(): Promise<SessionUser | null> {
-  const jar = await cookies();
-  const token = jar.get(COOKIE)?.value;
-  if (!token) return null;
-  try {
-    const {payload} = await jwtVerify(token, secret());
-    const user = db.prepare("SELECT id,email,username,role,is_blocked FROM users WHERE id=?").get(payload.sub) as SessionUser | undefined;
-    if (!user || user.is_blocked) return null;
-    return user;
-  } catch { return null; }
+  const supabase = await createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user || !user.email) return null;
+
+  const { data: profile, error } = await supabase
+    .from("profiles")
+    .select("id, username, role, is_blocked")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (error || !profile || profile.is_blocked) return null;
+  return {
+    id: user.id,
+    email: user.email,
+    username: profile.username ?? "",
+    role: profile.role,
+    is_blocked: profile.is_blocked,
+  };
 }
+
 export async function clearSession() {
-  const jar = await cookies();
-  jar.set(COOKIE, "", {httpOnly:true,secure:process.env.NODE_ENV==="production",sameSite:"lax",path:"/",maxAge:0});
+  const supabase = await createClient();
+  await supabase.auth.signOut();
 }

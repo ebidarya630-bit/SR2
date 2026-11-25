@@ -1,9 +1,14 @@
 # SR2
 
-Independent smartphone sunlight-readability certification platform.
+SR2 is an independent smartphone sunlight-readability certification platform built with Next.js, Supabase PostgreSQL, Supabase Auth and private Supabase Storage.
 
-The current stack is Next.js, SQLite, bcrypt password hashing and signed HTTP-only sessions. Supabase is not required.
+## Stack
+- Next.js 15 and React 19
+- Supabase PostgreSQL with row-level security
+- Supabase Auth with cookie-based SSR sessions
+- Supabase Storage for private certification evidence
+- TypeScript
 
-See [docs/SETUP.md](docs/SETUP.md) for local setup and Render deployment. The repository includes a Render Blueprint with persistent storage for SQLite and uploaded evidence.
+See [docs/SETUP.md](docs/SETUP.md) for local setup, administrator provisioning and deployment configuration.
 
-**Important:** the SR scoring methodology is not yet independently validated. No numerical certification score should be issued until validation is complete.
+**Important:** the SR scoring methodology is not yet independently validated. No numerical certification score should be issued until validation is complete. Physical device shipment remains optional and requires a separate explicit agreement.
