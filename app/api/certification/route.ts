@@ -4,7 +4,7 @@ import path from "node:path";
 import {getSession} from "@/lib/auth";
 import {createClient} from "@/lib/supabase/server";
 export const runtime="nodejs";
-const MAX_FILE=60*1024*1024;
+const MAX_FILE=50*1024*1024;
 
 function validateFile(file:File,kind:"video"|"evidence"){
  if(file.size>MAX_FILE)throw new Error("Each uploaded file must be 60 MB or smaller.");
