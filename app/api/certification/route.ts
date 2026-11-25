@@ -1,63 +1,72 @@
 import {NextResponse} from "next/server";
-import {randomUUID} from "node:crypto";
-import path from "node:path";
 import {getSession} from "@/lib/auth";
 import {createClient} from "@/lib/supabase/server";
 export const runtime="nodejs";
 const MAX_FILE=50*1024*1024;
+const MAX_TOTAL=100*1024*1024;
+const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const VIDEO_TYPES=["video/mp4","video/quicktime","video/webm"];
+const EVIDENCE_TYPES=["image/jpeg","image/png","image/webp","application/pdf"];
 
-function validateFile(file:File,kind:"video"|"evidence"){
- if(file.size>MAX_FILE)throw new Error("Each uploaded file must be 50 MB or smaller.");
- const ext=path.extname(file.name).toLowerCase();
- const allowed=kind==="video"?[".mp4",".mov",".webm"]:[".jpg",".jpeg",".png",".webp",".pdf"];
- if(!allowed.includes(ext))throw new Error("Unsupported file type: "+file.name);
- return {ext,assetType:kind==="video"?"test_video":"supporting_file"};
-}
+type SubmittedAsset={
+ application_id:string;asset_type:"test_video"|"supporting_file";storage_path:string;
+ original_filename:string;mime_type:string;file_size_bytes:number;uploaded_by:string;sort_order:number;
+};
 
 export async function POST(request:Request){
  const user=await getSession();if(!user)return NextResponse.json({error:"Please sign in first."},{status:401});
  const supabase=await createClient();
- const uploaded:string[]=[];
+ let uploadedPaths:string[]=[];
  try{
-  const form=await request.formData();
-  const brandId=String(form.get("brandId")??"");
-  const manufacturer=String(form.get("manufacturer")??"").trim().slice(0,120);
-  const model=String(form.get("modelName")??"").trim().slice(0,160);
-  const modelNumber=String(form.get("modelNumber")??"").trim().slice(0,100);
-  const releaseDate=String(form.get("releaseDate")??"").trim();
-  const nits=Number(form.get("nits"));const lux=Number(form.get("lux"));
-  const notes=String(form.get("testNotes")??"").trim().slice(0,5000);
-  const consent=form.get("archiveConsent")==="on";
-  const {data:member,error:memberError}=await supabase.from("brands").select("id,status,bsc_code,brand_members!inner(user_id)").eq("id",brandId).eq("brand_members.user_id",user.id).maybeSingle();
-  if(memberError||!member)return NextResponse.json({error:"You do not have access to this brand."},{status:403});
-  if(member.status!=="verified"||!member.bsc_code)return NextResponse.json({error:"The brand must be verified and have an active BSC code before submitting a certification."},{status:400});
+  const body=await request.json();
+  const applicationId=String(body.applicationId??"");
+  const brandId=String(body.brandId??"");
+  const manufacturer=String(body.manufacturer??"").trim().slice(0,120);
+  const model=String(body.modelName??"").trim().slice(0,160);
+  const modelNumber=String(body.modelNumber??"").trim().slice(0,100);
+  const releaseDate=String(body.releaseDate??"").trim();
+  const nits=Number(body.nits);const lux=Number(body.lux);
+  const notes=String(body.testNotes??"").trim().slice(0,5000);
+  const testVideoPath=String(body.testVideoPath??"");
+  const assets=body.assets as SubmittedAsset[];
+  if(!UUID.test(applicationId)||!UUID.test(brandId))return NextResponse.json({error:"Invalid application or brand identifier."},{status:400});
   if(!manufacturer||!model)return NextResponse.json({error:"Manufacturer and full model name are required."},{status:400});
   if(!Number.isFinite(nits)||nits<=0||nits>100000||!Number.isFinite(lux)||lux<=0||lux>1000000)return NextResponse.json({error:"Enter valid measured nits and lux values."},{status:400});
   if(!notes)return NextResponse.json({error:"Describe the test setup and measurement conditions."},{status:400});
-  if(!consent)return NextResponse.json({error:"Please confirm the device-return and archive terms before submitting."},{status:400});
-  const video=form.get("testVideo");const images=form.getAll("evidence").filter((x):x is File=>x instanceof File&&x.size>0);
-  if(!(video instanceof File)||video.size===0)return NextResponse.json({error:"A complete test video is required."},{status:400});
-  if(images.length<1||images.length>12)return NextResponse.json({error:"Upload between 1 and 12 evidence images or PDFs."},{status:400});
-  const id=randomUUID();
-  const files=[{file:video,kind:"video" as const},...images.map(file=>({file,kind:"evidence" as const}))];
-  const assets=[] as Array<{application_id:string;asset_type:string;storage_path:string;original_filename:string;mime_type:string;file_size_bytes:number;uploaded_by:string;sort_order:number}>;
-  for(let index=0;index<files.length;index++){
-   const {file,kind}=files[index];const {ext,assetType}=validateFile(file,kind);
-   const storagePath=user.id+"/"+id+"/"+randomUUID()+ext;
-   const {error:uploadError}=await supabase.storage.from("sr-private").upload(storagePath,file,{contentType:file.type||"application/octet-stream",upsert:false});
-   if(uploadError)throw new Error("Unable to upload evidence files. Please try again.");
-   uploaded.push(storagePath);
-   assets.push({application_id:id,asset_type:assetType,storage_path:storagePath,original_filename:file.name.slice(0,180),mime_type:file.type.slice(0,100),file_size_bytes:file.size,uploaded_by:user.id,sort_order:index});
+  if(body.archiveConsent!==true)return NextResponse.json({error:"Please confirm the device-return and archive terms before submitting."},{status:400});
+  if(releaseDate&&!/^\d{4}-\d{2}-\d{2}$/.test(releaseDate))return NextResponse.json({error:"Enter a valid release date."},{status:400});
+  if(!Array.isArray(assets)||assets.length<2||assets.length>13)return NextResponse.json({error:"Upload one test video and between 1 and 12 evidence files."},{status:400});
+
+  const prefix=user.id+"/"+applicationId+"/";
+  const totalBytes=assets.reduce((sum,item)=>sum+Number(item.file_size_bytes||0),0);
+  if(totalBytes>MAX_TOTAL)return NextResponse.json({error:"The combined upload size must be 100 MB or smaller."},{status:400});
+  let hasVideo=false;let hasEvidence=false;
+  for(const item of assets){
+   const mime=String(item.mime_type??"").toLowerCase();
+   if(item.application_id!==applicationId||item.uploaded_by!==user.id||!item.storage_path.startsWith(prefix))return NextResponse.json({error:"Invalid evidence ownership or storage path."},{status:400});
+   if(!Number.isInteger(item.file_size_bytes)||item.file_size_bytes<1||item.file_size_bytes>MAX_FILE)return NextResponse.json({error:"Each uploaded file must be 50 MB or smaller."},{status:400});
+   if(item.asset_type==="test_video"&&VIDEO_TYPES.includes(mime))hasVideo=true;
+   else if(item.asset_type==="supporting_file"&&EVIDENCE_TYPES.includes(mime))hasEvidence=true;
+   else return NextResponse.json({error:"Unsupported evidence type."},{status:400});
+   uploadedPaths.push(item.storage_path);
   }
+  if(!hasVideo||!hasEvidence||!uploadedPaths.includes(testVideoPath))return NextResponse.json({error:"The test video and supporting evidence are required."},{status:400});
+
+  const {data:objects,error:storageError}=await supabase.storage.from("sr-private").list(user.id+"/"+applicationId,{limit:20});
+  if(storageError)throw new Error("Unable to verify uploaded evidence. Please try again.");
+  const stored=new Set((objects??[]).map(object=>prefix+object.name));
+  if(uploadedPaths.some(storagePath=>!stored.has(storagePath)))throw new Error("One or more evidence files are missing. Please upload them again.");
+
   const {data:createdId,error:submitError}=await supabase.rpc("submit_certification_application",{
-   p_application_id:id,p_brand_id:brandId,p_manufacturer:manufacturer,p_full_model_name:model,
+   p_application_id:applicationId,p_brand_id:brandId,p_manufacturer:manufacturer,p_full_model_name:model,
    p_model_number:modelNumber||null,p_release_date:releaseDate||null,p_nit_value:nits,p_lux_value:lux,
-   p_test_video_path:assets[0].storage_path,p_test_method_notes:notes,p_assets:assets,
+   p_test_video_path:testVideoPath,p_test_method_notes:notes,p_assets:assets,
   });
   if(submitError||!createdId)throw new Error("Unable to save the certification application and evidence records. Please try again.");
-  return NextResponse.json({ok:true,applicationId:id,message:"Certification application submitted for review."});
+  uploadedPaths=[];
+  return NextResponse.json({ok:true,applicationId,message:"Certification application submitted for review."});
  }catch(e){
-  if(uploaded.length)await supabase.storage.from("sr-private").remove(uploaded);
+  if(uploadedPaths.length)await supabase.storage.from("sr-private").remove(uploadedPaths);
   return NextResponse.json({error:e instanceof Error?e.message:"Unable to submit application."},{status:400});
  }
 }
