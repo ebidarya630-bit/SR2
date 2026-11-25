@@ -10,7 +10,7 @@
     "admin:provision": "tsx scripts/provision-admin.ts"
   },
   "dependencies": {
-    "next": "^15.2.4",
+    "next": "16.4.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "@supabase/ssr": "0.12.7",
@@ -23,7 +23,7 @@
     "@types/react-dom": "^19.0.4",
     "tsx": "^4.19.3",
     "typescript": "^5.8.2",
-    "@next/env": "^15.2.4"
+    "@next/env": "16.4.6"
   },
   "engines": {
     "node": ">=22.0.0"
