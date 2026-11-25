@@ -1,1 +1,2 @@
-import{NextResponse}from"next/server";import{createClient}from"@/lib/supabase/server";export async function GET(request:Request){const{searchParams,origin}=new URL(request.url);const code=searchParams.get("code");if(code){const supabase=await createClient();const{error}=await supabase.auth.exchangeCodeForSession(code);if(!error)return NextResponse.redirect(origin+"/dashboard");}return NextResponse.redirect(origin+"/login?message=confirmation_failed");}
+import {NextResponse} from "next/server";
+export async function GET(request:Request){return NextResponse.redirect(new URL("/login?message=email_confirmation_not_required",request.url));}
