@@ -6,15 +6,11 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const email = String(body.email ?? "").trim().toLowerCase();
-    if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
     }
-
     const supabase = await createClient();
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { shouldCreateUser: true },
-    });
+    const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
     if (error) {
       const message = error.message.toLowerCase();
       if (message.includes("rate") || message.includes("limit")) {
