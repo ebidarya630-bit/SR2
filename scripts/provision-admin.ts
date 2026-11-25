@@ -4,7 +4,7 @@ loadEnvConfig(process.cwd());
 
 const url=process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key=process.env.SUPABASE_SECRET_KEY;
-const email=(process.env.ADMIN_EMAIL||"").trim().toLowerCase();
+const email=(process.env.ADMIN_EMAIL||"adminsr@gmail.com").trim().toLowerCase();
 const password=process.env.ADMIN_PASSWORD;
 if(!url||!key)throw new Error("Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY in the private environment.");
 if(!email)throw new Error("Set ADMIN_EMAIL in the private environment.");
