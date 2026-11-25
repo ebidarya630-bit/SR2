@@ -26,7 +26,8 @@ The production project is aksvxjrweqgdecsoxomw in us-east-2 (Ohio). Database mig
 
 ## Operational notes
 - Keep SUPABASE_SECRET_KEY private. Only the publishable key may be used in browser-exposed variables.
-- Certification evidence is stored in the private sr-private bucket. Object access is restricted by Storage RLS policies.
+- Certification evidence is uploaded directly from the browser to the private sr-private bucket using resumable TUS uploads, avoiding Vercel's request-body limit. Object access is restricted by Storage RLS policies.
+- Certification submissions are capped at 50 MB per file and 100 MB total per application on the current Free-tier configuration.
 - BSC invitation tokens are single-use, stored only as SHA-256 hashes, and expire after seven days.
 - Password reset, broader abuse monitoring, automated BSC invitation emails and full support messaging still need implementation.
 - The SR scoring methodology is not independently validated. Do not issue numerical SR scores or certificates until a repeatable protocol and scoring model have been independently validated.
