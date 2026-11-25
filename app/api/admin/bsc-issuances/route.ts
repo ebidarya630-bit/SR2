@@ -11,6 +11,8 @@ export async function POST(request:Request){
   const brand=db.prepare("SELECT id,display_name,official_email,status FROM brands WHERE id=?").get(brandId) as {id:string;display_name:string;official_email:string;status:string}|undefined;
   if(!brand)return NextResponse.json({error:"Brand not found."},{status:404});
   if(brand.status==="suspended")return NextResponse.json({error:"A suspended brand cannot receive a BSC code."},{status:400});
+  const pending=db.prepare("SELECT id FROM bsc_issuances WHERE brand_id=? AND claimed_at IS NULL AND expires_at>? LIMIT 1").get(brandId,new Date().toISOString());
+  if(pending)return NextResponse.json({error:"This brand already has an unused BSC invitation. Use the existing link or wait for it to expire."},{status:409});
   const code="BSC-"+suffix;const token=randomBytes(32).toString("base64url");const tokenHash=createHash("sha256").update(token).digest("hex");
   const expires=new Date(Date.now()+7*24*60*60*1000).toISOString();const id=randomUUID();
   try{db.prepare("INSERT INTO bsc_issuances(id,brand_id,bsc_code,token_hash,expires_at,created_by) VALUES(?,?,?,?,?,?)").run(id,brandId,code,tokenHash,expires,admin.id);}
