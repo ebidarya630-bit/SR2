@@ -42,7 +42,7 @@ export default function Brand(){
  useEffect(()=>{refresh().catch(e=>{setError(e.message);setLoading(false);});},[]);
  async function register(e:React.FormEvent){e.preventDefault();setBusy(true);setError("");setMessage("");try{const r=await fetch("/api/brand/register",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({legalName,displayName,officialEmail,websiteUrl,foundedOn})});const d=await r.json();if(!r.ok)throw new Error(d.error);setMessage(d.message);setLegal("");setDisplay("");setEmail("");setWebsite("");setFounded("");await refresh();}catch(e){setError(e instanceof Error?e.message:"Request failed");}finally{setBusy(false);}}
  async function apply(e:React.FormEvent){
-  e.preventDefault();setBusy(true);setError("");setMessage("");setUploadProgress(0);
+  e.preventDefault();const formElement=e.currentTarget as HTMLFormElement;setBusy(true);setError("");setMessage("");setUploadProgress(0);
   const supabase=createClient();const uploadedPaths:string[]=[];
   try{
    if(!testVideo||!evidence||evidence.length<1)throw new Error("Choose a test video and at least one evidence file.");
@@ -75,7 +75,7 @@ export default function Brand(){
    }
    const response=await fetch("/api/certification",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({applicationId,brandId,manufacturer,modelName,modelNumber,releaseDate,nits,lux,testNotes,archiveConsent,testVideoPath:records[0].storage_path,assets:records})});
    const result=await response.json();if(!response.ok)throw new Error(result.error||"Unable to submit application.");
-   setUploadProgress(100);setMessage(result.message);setModel("");setModelNumber("");setRelease("");setNits("");setLux("");setNotes("");setVideo(null);setEvidence(null);setConsent(false);(e.currentTarget as HTMLFormElement).reset();await refresh();
+   setUploadProgress(100);setMessage(result.message);setModel("");setModelNumber("");setRelease("");setNits("");setLux("");setNotes("");setVideo(null);setEvidence(null);setConsent(false);uploadedPaths.length=0;formElement.reset();await refresh();
   }catch(error){
    if(uploadedPaths.length)await supabase.storage.from("sr-private").remove(uploadedPaths);
    setError(error instanceof Error?error.message:"Request failed");
