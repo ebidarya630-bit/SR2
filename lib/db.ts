@@ -96,7 +96,9 @@ function openDatabase() {
     CREATE INDEX IF NOT EXISTS idx_applications_brand ON certification_applications(brand_id, created_at DESC);
     CREATE INDEX IF NOT EXISTS idx_tickets_creator ON support_tickets(created_by, created_at DESC);
   `);
-  const brandColumns = db.prepare("PRAGMA table_info(brands)").all() as Array<{name:string}>;\n  if (!brandColumns.some(column => column.name === "logo_path")) db.exec("ALTER TABLE brands ADD COLUMN logo_path TEXT");\n  db.prepare("INSERT OR IGNORE INTO site_settings(key,value) VALUES (?,?)").run("brand", JSON.stringify({name:"SR Certification",theme:"orange-light",default_locale:"en"}));
+  const brandColumns = db.prepare("PRAGMA table_info(brands)").all() as Array<{name:string}>;
+  if (!brandColumns.some(column => column.name === "logo_path")) db.exec("ALTER TABLE brands ADD COLUMN logo_path TEXT");
+  db.prepare("INSERT OR IGNORE INTO site_settings(key,value) VALUES (?,?)").run("brand", JSON.stringify({name:"SR Certification",theme:"orange-light",default_locale:"en"}));
   db.prepare("INSERT OR IGNORE INTO site_settings(key,value) VALUES (?,?)").run("support", JSON.stringify({email:"bscmailcode@gmail.com",hours:"10:00-22:00",timezone:"Asia/Tehran"}));
   return db;
 }
