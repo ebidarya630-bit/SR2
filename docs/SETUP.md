@@ -1,7 +1,7 @@
 # SR2 setup and deployment
 
 ## Architecture
-SR2 uses Next.js 15, Supabase PostgreSQL, Supabase Auth and a private Supabase Storage bucket. Authentication sessions are stored in secure cookies using @supabase/ssr. The service secret key is used only by the server-side administrator provisioning script; never expose it in browser code.
+SR2 uses Next.js 16, Supabase PostgreSQL, Supabase Auth and a private Supabase Storage bucket. Authentication sessions are stored in secure cookies using @supabase/ssr. The service secret key is used only by the server-side administrator provisioning script; never expose it in browser code.
 
 ## Supabase project
 The production project is aksvxjrweqgdecsoxomw in us-east-2 (Ohio). Database migrations are in supabase/migrations/. They create the platform tables, RLS policies, security helper functions, public certificate directory and private evidence bucket.
