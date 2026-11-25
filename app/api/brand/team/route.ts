@@ -28,7 +28,7 @@ export async function POST(request:Request){
    const existing=await first("SELECT 1 AS found FROM brand_members WHERE brand_id=? AND user_id=?",brandId,account.id);
    if(existing)return NextResponse.json({error:"This account is already a member of the brand."},{status:409});
   }
-  const pending=await first("SELECT id FROM brand_invitations WHERE brand_id=? AND email=? AND accepted_at IS NULL AND expires_at>CURRENT_TIMESTAMP",brandId,email);
+  const pending=await first("SELECT id FROM brand_invitations WHERE brand_id=? AND email=? AND accepted_at IS NULL AND datetime(expires_at)>CURRENT_TIMESTAMP",brandId,email);
   if(pending)return NextResponse.json({error:"An active invitation already exists for this email."},{status:409});
   const token=randomBytes(32).toString("base64url");const hash=createHash("sha256").update(token).digest("hex");const id=randomUUID();
   await run("INSERT INTO brand_invitations(id,brand_id,email,member_role,token_hash,expires_at,created_by) VALUES(?,?,?,?,?,?,?)",id,brandId,email,role,hash,new Date(Date.now()+7*86400000).toISOString(),user.id);
