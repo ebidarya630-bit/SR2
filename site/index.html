@@ -18,4 +18,41 @@
 <section class="bottom" id="about"><div><div class="eyebrow">Independent by design</div><h2 style="margin:7px 0 0;color:white">A clearer way to compare displays.</h2><p>Built as an initiative of Saturn Studio.</p></div><a class="btn" href="https://github.com/ebidarya630-bit/SR2">Source code on GitHub ↗</a></section>
 </main>
 <footer class="shell foot"><span>© 2026 SR2 · A Saturn Studio initiative</span><span>Research-led. Evidence-first. Transparent.</span></footer>
+
+<style>
+#sr-lang{position:fixed;z-index:9999;top:14px;right:16px;padding:9px 12px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);font:600 13px system-ui;box-shadow:0 5px 20px #24232112}html[dir=rtl] #sr-lang{right:auto;left:16px}html[dir=rtl] body{text-align:right}html[dir=rtl] nav,html[dir=rtl] .actions,html[dir=rtl] .cards{direction:rtl}
+</style>
+<select id="sr-lang" aria-label="Choose language">
+<option value="en">English</option><option value="fa">فارسی</option><option value="ru">Русский</option><option value="tg">Тоҷикӣ</option><option value="ko">한국어</option><option value="ja">日本語</option><option value="zh">中文</option><option value="es">Español</option><option value="fr">Français</option>
+</select>
+<script>
+(()=>{
+const phrases=[
+["Method","Méthode","Método","方法","方法","메서드","Метод","Усул","روش"],
+["About","À propos","Acerca de","关于","概要","소개","О проекте","Дар бораи мо","درباره ما"],
+["A standard for sunlight readability","Une norme de lisibilité au soleil","Un estándar de legibilidad bajo la luz solar","阳光下可读性标准","太陽光下での視認性基準","햇빛 아래 가독성 표준","Стандарт читаемости при солнечном свете","Стандарт барои хондашавӣ дар нури офтоб","استانداردی برای خوانایی زیر نور خورشید"],
+["See clearly.","Voyez clairement.","Ve con claridad.","清晰可见。","はっきり見える。","선명하게 보세요.","Видеть чётко.","Равшан бинед.","واضح ببینید."],
+["Even in sunlight.","Même en plein soleil.","Incluso bajo el sol.","即使在阳光下。","太陽光の下でも。","햇빛 아래에서도.","Даже под солнцем.","Ҳатто дар зери офтоб.","حتی زیر نور خورشید."],
+["Explore the initiative","Explorer l’initiative","Explorar la iniciativa","了解这项计划","取り組みを見る","이니셔티ブ 살펴보기","Изучить инициативу","Омӯхтани ташаббус","آشنایی با طرح"],
+["Explore the project ↗","Explorer le projet ↗","Explorar el proyecto ↗","查看项目 ↗","プロジェクトを見る ↗","프로젝트 보기 ↗","Изучить проект ↗","Омӯхтани лоиҳа ↗","مشاهده پروژه ↗"],
+["Evidence before ratings.","Les preuves avant les notes.","Pruebas antes que puntuaciones.","证据优先于评分。","評価より証拠を。","평가보다 증거를.","Доказательства важнее оценок.","Далелҳо пеш аз баҳогузорӣ.","شواهد پیش از امتیاز."],
+["Collect evidence","Recueillir des preuves","Recopilar pruebas","收集证据","証拠を収集","증거 수집","Собрать доказательства","Ҷамъоварии далелҳо","جمع‌آوری شواهد"],
+["Review transparently","Examiner en toute transparence","Revisar con transparencia","透明审核","透明性のある審査","투명하게 검토","Прозрачная проверка","Баррасии шаффоф","بررسی شفاف"],
+["Publish responsibly","Publier de manière responsable","Publicar responsablemente","负责任地发布","責任を持って公開","책임감 있게 공개","Ответственная публикация","Нашри масъулона","انتشار مسئولانه"],
+["Device details, test conditions, measurement records and supporting material form the basis of an assessment.","Les détails de l’appareil, les conditions de test, les mesures et les pièces justificatives constituent la base de l’évaluation.","Los datos del dispositivo, las condiciones de prueba, las mediciones y el material de apoyo forman la base de la evaluación.","设备信息、测试条件、测量记录和支持材料构成评估依据。","端末情報、試験条件、測定記録、補足資料が評価の基礎となります。","기기 정보, 테스트 조건, 측정 기록 및 증빙 자료가 평가의 기초가 됩니다.","Сведения об устройстве, условия испытаний, измерения и подтверждающие материалы составляют основу оценки.","Маълумоти дастгоҳ, шароити санҷиш, сабтҳои ченкунӣ ва маводи тасдиқкунанда асоси арзёбӣ мебошанд.","مشخصات دستگاه، شرایط آزمایش، سوابق اندازه‌گیری و مدارک پشتیبان مبنای ارزیابی هستند."],
+["Testing conditions and evidence should be documented so results can be examined and repeated.","Les conditions de test et les preuves doivent être documentées afin que les résultats puissent être examinés et reproduits.","Las condiciones de prueba y las pruebas deben documentarse para que los resultados puedan examinarse y repetirse.","应记录测试条件和证据，以便检查和复现实验结果。","結果を検証・再現できるよう、試験条件と証拠を記録します。","결과를 검토하고 재현할 수 있도록 테스트 조건과 증거를 문서화합니다.","Условия испытаний и доказательства должны документироваться для проверки и повторения результатов.","Шароити санҷиш ва далелҳо бояд сабт шаванд, то натиҷаҳо санҷида ва такрор карда шаванд.","Les conditions de test et les preuves doivent être documentées afin que les résultats puissent être examinés et reproduits."],
+["A public score should only be released after the methodology has been independently validated.","Un score public ne doit être publié qu’après validation indépendante de la méthodologie.","Una puntuación pública solo debe publicarse tras validar la metodología de forma independiente.","只有在方法经过独立验证后，才能公布评分。","評価方法が独立して検証された後にのみ公開スコアを発表します。","평가 방법이 독립적으로 검증된 후에만 공개 점수를 발표해야 합니다.","Публичная оценка должна публиковаться только после независимой проверки методики.","Холи оммавӣ танҳо пас аз тасдиқи мустақили усул нашр мешавад.","امتیاز عمومی تنها پس از اعتبارسنجی مستقل روش‌شناسی منتشر می‌شود."],
+["Independent by design","Indépendant par conception","Independiente por diseño","独立设计","独立性を重視","독립성을 위한 설계","Независимость по замыслу","Аз рӯи тарҳ мустақил","مستقل از ابتدا"],
+["A clearer way to compare displays.","Une façon plus claire de comparer les écrans.","Una forma más clara de comparar pantallas.","更清晰地比较显示屏。","ディスプレイをより明確に比較する方法。","디스플레이를 더 명확하게 비교하는 방법.","Более понятный способ сравнивать дисплеи.","Роҳи равшантар барои муқоисаи экранҳо.","راهی شفاف‌تر برای مقایسه نمایشگرها."],
+["Built as an initiative of Saturn Studio.","Créé comme une initiative de Saturn Studio.","Creado como una iniciativa de Saturn Studio.","由 Saturn Studio 发起。","Saturn Studioの取り組みとして設立。","Saturn Studio의 이니셔티브로 제작되었습니다.","Создано как инициатива Saturn Studio.","Ҳамчун ташаббуси Saturn Studio сохта шудааст.","به‌عنوان طرحی از Saturn Studio ایجاد شده است."],
+["Source code on GitHub ↗","Code source sur GitHub ↗","Código fuente en GitHub ↗","GitHub 源代码 ↗","GitHubのソースコード ↗","GitHub 소스 코드 ↗","Исходный код на GitHub ↗","Рамзи манбаъ дар GitHub ↗","کد منبع در گیت‌هاب ↗"],
+["SR2 · A Saturn Studio initiative","SR2 · Une initiative de Saturn Studio","SR2 · Una iniciativa de Saturn Studio","SR2 · Saturn Studio 发起项目","SR2 · Saturn Studioの取り組み","SR2 · Saturn Studio 이니셔티브","SR2 · Инициатива Saturn Studio","SR2 · Ташаббуси Saturn Studio","SR2 · طرحی از Saturn Studio"]
+];
+const map={};for(const row of phrases){const en=row[0];["fr","es","zh","ja","ko","ru","tg","fa"].forEach((lang,i)=>map[lang+"|"+en]=row[i+1]);}
+const select=document.getElementById("sr-lang");const source=new WeakMap();
+function apply(lang){document.documentElement.lang=lang;document.documentElement.dir=lang==="fa"?"rtl":"ltr";const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let n;while(n=walker.nextNode()){if(n.parentElement?.closest("#sr-lang,script,style"))continue;const txt=n.textContent||"",key=source.get(n)||txt.trim();if(!key)continue;if(!source.has(n))source.set(n,key);const val=lang==="en"?key:(map[lang+"|"+key]||key);if(txt.trim()!==val)n.textContent=txt.replace(txt.trim(),val);}document.title=lang==="fa"?"SR2 — خوانایی زیر نور خورشید":lang==="ru"?"SR2 — Читаемость при солнечном свете":lang==="es"?"SR2 — Legibilidad bajo la luz solar":lang==="fr"?"SR2 — Lisibilité au soleil":lang==="zh"?"SR2 — 阳光下可读性":lang==="ja"?"SR2 — 太陽光下での視認性":lang==="ko"?"SR2 — 햇빛 아래 가독성":lang==="tg"?"SR2 — Хондашавӣ дар нури офтоб":"SR2 — Sunlight Readability";}
+const saved=localStorage.getItem("sr-locale")||"en";select.value=[...select.options].some(o=>o.value===saved)?saved:"en";apply(select.value);select.addEventListener("change",()=>{localStorage.setItem("sr-locale",select.value);apply(select.value);});
+const observer=new MutationObserver(()=>apply(select.value));observer.observe(document.body,{subtree:true,childList:true,characterData:true});
+})();
+</script>
 </body></html>
