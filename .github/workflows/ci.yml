@@ -25,5 +25,5 @@ jobs:
       - name: Production build
         run: npm run build
         env:
-          SESSION_SECRET: ci-only-not-a-production-secret-change-this-value
-          DATABASE_PATH: ./data/ci.sqlite
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_placeholder
