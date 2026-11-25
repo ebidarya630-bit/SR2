@@ -21,17 +21,16 @@ fr:["Base de données des téléphones","À propos","Assistance","Pour les marqu
 };
 const dictionary:Record<string,string>={};
 for(const locale of Object.keys(tr) as Exclude<Locale,"en">[]){en.forEach((phrase,i)=>{if(tr[locale][i])dictionary[locale+"|"+phrase]=tr[locale][i];});}
-const rtl:Locale[]=["fa"];
+
+const sourceTexts=new WeakMap<Text,string>();
 function applyLocale(locale:Locale){
- const root=document.documentElement;root.lang=locale;root.dir=rtl.includes(locale)?"rtl":"ltr";
- document.body?.setAttribute("data-sr-locale",locale);
- const walk=()=>{const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let node:Node|null;while((node=walker.nextNode())){const el=node.parentElement;if(!el||["SCRIPT","STYLE","NOSCRIPT","OPTION"].includes(el.tagName)||el.closest("[data-sr-language-control]"))continue;const raw=(node.textContent||"");const trimmed=raw.trim();if(!trimmed)continue;const original=(node as Text).getAttribute?.("data-sr-source")??trimmed;const translated=locale==="en"?original:(dictionary[locale+"|"+original]??original);if(translated!==trimmed){if(!(node as Text).getAttribute?.("data-sr-source"))(node as Text).textContent=translated;else node.textContent=raw.replace(trimmed,translated);}else if(locale!=="en"&&translated===original&&(node as Text).textContent!==translated){node.textContent=translated;}}
- document.querySelectorAll<HTMLElement>("input[placeholder],textarea[placeholder],input[aria-label],button[aria-label]").forEach(el=>{for(const attr of ["placeholder","aria-label"]){const value=el.getAttribute(attr);if(value){const source=el.dataset["sr"+attr];if(!source)el.dataset["sr"+attr]=value;const original=el.dataset["sr"+attr]||value;el.setAttribute(attr,locale==="en"?original:(dictionary[locale+"|"+original]??original));}}});
- };
- walk();const observer=new MutationObserver(()=>walk());observer.observe(document.body,{subtree:true,childList:true,characterData:true});return observer;
+ const root=document.documentElement;root.lang=locale;root.dir=locale==="fa"?"rtl":"ltr";
+ const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let node:Node|null;
+ while((node=walker.nextNode())){const text=node as Text;const el=text.parentElement;if(!el||["SCRIPT","STYLE","NOSCRIPT","OPTION"].includes(el.tagName)||el.closest("[data-sr-language-control]"))continue;const current=text.textContent||"";const trimmed=current.trim();if(!trimmed)continue;const original=sourceTexts.get(text)??trimmed;if(!sourceTexts.has(text))sourceTexts.set(text,original);const translated=locale==="en"?original:(dictionary[locale+"|"+original]??original);if(translated!==trimmed)text.textContent=current.replace(trimmed,translated);}
+ document.querySelectorAll<HTMLElement>("input[placeholder],textarea[placeholder],input[aria-label],button[aria-label]").forEach(el=>{for(const attr of ["placeholder","aria-label"]){const value=el.getAttribute(attr);if(!value)continue;const key="srSource"+attr;const original=el.dataset[key]??value;el.dataset[key]=original;el.setAttribute(attr,locale==="en"?original:(dictionary[locale+"|"+original]??original));}});
 }
 export function LanguageSystem(){const[locale,setLocale]=useState<Locale>("en");
- useEffect(()=>{const saved=(localStorage.getItem("sr-locale")||"en") as Locale;const valid=languages.some(x=>x.code===saved)?saved:"en";setLocale(valid);const observer=applyLocale(valid);return()=>observer.disconnect();},[]);
+ useEffect(()=>{const saved=localStorage.getItem("sr-locale") as Locale|null;const valid=languages.some(x=>x.code===saved)?saved!:"en";setLocale(valid);applyLocale(valid);const observer=new MutationObserver(()=>applyLocale((document.documentElement.lang as Locale)||"en"));observer.observe(document.body,{subtree:true,childList:true,characterData:true});return()=>observer.disconnect();},[]);
  function change(value:string){const next=value as Locale;setLocale(next);localStorage.setItem("sr-locale",next);document.cookie="sr-locale="+next+"; Path=/; Max-Age=31536000; SameSite=Lax";applyLocale(next);}
  return <div data-sr-language-control className="sr-language"><span aria-hidden="true">◎</span><select aria-label="Choose language" value={locale} onChange={e=>change(e.target.value)}>{languages.map(l=><option key={l.code} value={l.code}>{l.native}</option>)}</select></div>;
 }
