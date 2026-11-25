@@ -122,10 +122,10 @@ revoke all on function public.claim_bsc_code(text) from public;
 grant execute on function public.claim_bsc_code(text) to authenticated;
 
 -- Do not allow anonymous clients to invoke privileged helper functions.
-revoke all on function public.is_admin() from public, anon;
-grant execute on function public.is_admin() to authenticated;
-revoke all on function public.is_brand_member(uuid) from public, anon;
-grant execute on function public.is_brand_member(uuid) to authenticated;
+-- RLS policies also evaluate these boolean helpers for anonymous reads
+-- (for example, active public certificate records). They reveal no row data.
+grant execute on function public.is_admin() to anon, authenticated;
+grant execute on function public.is_brand_member(uuid) to anon, authenticated;
 
 -- Public directory should expose only the minimal active-certificate fields.
 create or replace view public.public_certificate_directory
