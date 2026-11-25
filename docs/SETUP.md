@@ -24,8 +24,8 @@ The repository includes `render.yaml`, a Render Blueprint for a Node web service
 2. Select the `main` branch and review the Blueprint.
 3. Set `ADMIN_PASSWORD` to a new unique password when prompted. Do not reuse any password previously shared in chat.
 4. Apply the Blueprint. Render generates `SESSION_SECRET` automatically.
-5. After the service is live, open its Shell and run `npm run admin:provision` once. This creates the admin user in the persistent SQLite database.
-6. Sign in at `/login`.
+6. After the service is live, open its Shell and run `npm run admin:provision` once. This creates the admin user in the persistent SQLite database.
+7. Sign in at `/login`.
 
 The Blueprint uses a paid Starter web service because Render persistent disks require a paid service. The disk is mounted at `/var/data`, with the SQLite file and uploads stored beneath it. A disk-backed service runs as a single instance and deploys may cause a brief interruption. Review current Render pricing before applying.
 
