@@ -1,5 +1,6 @@
 import {loadEnvConfig} from "@next/env";
 loadEnvConfig(process.cwd());
+const {db} = await import("../lib/db");
 import { createClient } from "@supabase/supabase-js";
 const url=process.env.NEXT_PUBLIC_SUPABASE_URL;const key=process.env.SUPABASE_SERVICE_ROLE_KEY;const email=process.env.ADMIN_EMAIL?.trim().toLowerCase();const password=process.env.ADMIN_PASSWORD;
 if(!url||!key||!email||!password)throw new Error("Set Supabase URL, service role key, ADMIN_EMAIL and ADMIN_PASSWORD in private .env.local.");
