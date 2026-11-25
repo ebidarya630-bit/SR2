@@ -14,8 +14,6 @@ function uploadResumable(file:File,path:string,contentType:string,accessToken:st
  const apiKey=process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
  if(!projectUrl||!apiKey)throw new Error("Supabase upload settings are missing.");
  const storageHost=new URL(projectUrl).hostname.replace(".supabase.co",".storage.supabase.co");
- const extension=file.name.split(".").pop()?.toLowerCase()??"";
- const contentType=file.type||MIME_BY_EXTENSION[extension]||"application/octet-stream";
  return new Promise((resolve,reject)=>{
   const upload=new tus.Upload(file,{
    endpoint:"https://"+storageHost+"/storage/v1/upload/resumable",
