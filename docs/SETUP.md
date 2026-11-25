@@ -31,3 +31,12 @@ The production project is aksvxjrweqgdecsoxomw in us-east-2 (Ohio). Database mig
 - Password reset, broader abuse monitoring, automated BSC invitation emails and full support messaging still need implementation.
 - The SR scoring methodology is not independently validated. Do not issue numerical SR scores or certificates until a repeatable protocol and scoring model have been independently validated.
 - Physical device shipment is optional and requires a separate, explicit agreement before shipping.
+
+## Production plan requirements
+
+The connected Supabase project and Vercel team currently use free tiers. These are suitable for development and controlled testing, not a guaranteed always-on commercial launch:
+
+- Supabase Free projects may be paused after a week of low database activity and do not provide downloadable database backups. Upgrade to Supabase Pro before a public production launch that requires guaranteed availability and backup options.
+- Supabase Free has a 50 MB global upload ceiling; the private evidence bucket and server-side validation are intentionally capped at 50 MB per file. Raise the global and bucket limits together only after upgrading and reviewing storage costs.
+- Vercel Hobby is restricted to personal or non-commercial use. A commercial SR2 service must use an eligible paid Vercel plan before commercial launch.
+- Do not enable a paid plan or add billing without the project owner's explicit approval.
