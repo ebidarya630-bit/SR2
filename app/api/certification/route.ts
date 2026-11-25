@@ -39,7 +39,7 @@ export async function POST(request:Request){
   const video=form.get("testVideo");const images=form.getAll("evidence").filter((x):x is File=>x instanceof File&&x.size>0);
   if(!(video instanceof File)||video.size===0)return NextResponse.json({error:"A complete test video is required."},{status:400});
   if(images.length<1||images.length>12)return NextResponse.json({error:"Upload between 1 and 12 evidence images or PDFs."},{status:400});
-  const id=randomUUID();const saved=[];
+  const id=randomUUID();const saved:Array<{storedPath:string;originalName:string;mimeType:string;size:number;kind:string}>=[];
   try{
    saved.push(await saveFile(video,"video",id));
    for(const file of images)saved.push(await saveFile(file,"evidence",id));
