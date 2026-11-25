@@ -75,7 +75,7 @@ export default function Brand(){
    }
    const response=await fetch("/api/certification",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({applicationId,brandId,manufacturer,modelName,modelNumber,releaseDate,nits,lux,testNotes,archiveConsent,testVideoPath:records[0].storage_path,assets:records})});
    const result=await response.json();if(!response.ok)throw new Error(result.error||"Unable to submit application.");
-   setUploadProgress(100);setMessage(result.message);setModel("");setModelNumber("");setRelease("");setNits("");setLux("");setNotes("");setVideo(null);setEvidence(null);setConsent(false);e.currentTarget.reset();await refresh();
+   setUploadProgress(100);setMessage(result.message);setModel("");setModelNumber("");setRelease("");setNits("");setLux("");setNotes("");setVideo(null);setEvidence(null);setConsent(false);(e.currentTarget as HTMLFormElement).reset();await refresh();
   }catch(error){
    if(uploadedPaths.length)await supabase.storage.from("sr-private").remove(uploadedPaths);
    setError(error instanceof Error?error.message:"Request failed");
