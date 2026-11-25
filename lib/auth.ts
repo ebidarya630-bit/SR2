@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
-import { db } from "@/lib/db";
+import { first } from "@/lib/db";
 
 const COOKIE = "sr_session";
 function secret() {
@@ -21,7 +21,8 @@ export async function getSession(): Promise<SessionUser | null> {
   if (!token) return null;
   try {
     const {payload} = await jwtVerify(token, secret());
-    const user = db.prepare("SELECT id,email,username,role,is_blocked FROM users WHERE id=?").get(payload.sub) as SessionUser | undefined;
+    if (!payload.sub) return null;
+    const user = await first<SessionUser>("SELECT id,email,username,role,is_blocked FROM users WHERE id=?", payload.sub);
     if (!user || user.is_blocked) return null;
     return user;
   } catch { return null; }

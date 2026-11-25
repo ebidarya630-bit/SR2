@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, cloudflare-d1-migration]
   pull_request:
 
 permissions:
@@ -17,13 +17,14 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
       - name: Install dependencies
         run: npm install
       - name: Type check
         run: npm run typecheck
-      - name: Production build
-        run: npm run build
+      - name: Build Cloudflare Worker
+        run: npm run cf:build
         env:
           SESSION_SECRET: ci-only-not-a-production-secret-change-this-value
-          DATABASE_PATH: ./data/ci.sqlite
+          RESEND_API_KEY: re_test_placeholder
+          RESEND_FROM: SR2 <ci@example.invalid>
