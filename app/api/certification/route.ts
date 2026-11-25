@@ -49,10 +49,12 @@ export async function POST(request:Request){
    uploaded.push(storagePath);
    assets.push({application_id:id,asset_type:assetType,storage_path:storagePath,original_filename:file.name.slice(0,180),mime_type:file.type.slice(0,100),file_size_bytes:file.size,uploaded_by:user.id,sort_order:index});
   }
-  const {error:applicationError}=await supabase.from("certification_applications").insert({id,brand_id:brandId,submitted_by:user.id,manufacturer,full_model_name:model,model_number:modelNumber||null,release_date:releaseDate||null,nit_value:nits,lux_value:lux,test_video_path:assets[0].storage_path,test_method_notes:notes,status:"submitted",archive_device_consent:true,archive_consent_at:new Date().toISOString(),submitted_at:new Date().toISOString()});
-  if(applicationError)throw new Error("Unable to create the certification application. Please try again.");
-  const {error:assetError}=await supabase.from("application_assets").insert(assets);
-  if(assetError){await supabase.from("certification_applications").delete().eq("id",id);throw new Error("The application was not saved because its evidence records could not be created.");}
+  const {data:createdId,error:submitError}=await supabase.rpc("submit_certification_application",{
+   p_application_id:id,p_brand_id:brandId,p_manufacturer:manufacturer,p_full_model_name:model,
+   p_model_number:modelNumber||null,p_release_date:releaseDate||null,p_nit_value:nits,p_lux_value:lux,
+   p_test_video_path:assets[0].storage_path,p_test_method_notes:notes,p_assets:assets,
+  });
+  if(submitError||!createdId)throw new Error("Unable to save the certification application and evidence records. Please try again.");
   return NextResponse.json({ok:true,applicationId:id,message:"Certification application submitted for review."});
  }catch(e){
   if(uploaded.length)await supabase.storage.from("sr-private").remove(uploaded);
