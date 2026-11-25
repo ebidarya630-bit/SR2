@@ -7,7 +7,7 @@ export const runtime="nodejs";
 const MAX_FILE=50*1024*1024;
 
 function validateFile(file:File,kind:"video"|"evidence"){
- if(file.size>MAX_FILE)throw new Error("Each uploaded file must be 60 MB or smaller.");
+ if(file.size>MAX_FILE)throw new Error("Each uploaded file must be 50 MB or smaller.");
  const ext=path.extname(file.name).toLowerCase();
  const allowed=kind==="video"?[".mp4",".mov",".webm"]:[".jpg",".jpeg",".png",".webp",".pdf"];
  if(!allowed.includes(ext))throw new Error("Unsupported file type: "+file.name);
