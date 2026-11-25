@@ -6,11 +6,24 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const email = String(body.email ?? "").trim().toLowerCase();
+    const username = String(body.username ?? "").trim();
+    const password = String(body.password ?? "");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
     }
+    if (!/^[A-Za-z0-9_.-]{3,30}$/.test(username)) {
+      return NextResponse.json({ error: "Choose a username with 3–30 letters, numbers, dots, underscores or hyphens." }, { status: 400 });
+    }
+    if (password.length < 10) {
+      return NextResponse.json({ error: "Password must be at least 10 characters." }, { status: 400 });
+    }
+
     const supabase = await createClient();
-    const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { username, display_name: username } },
+    });
     if (error) {
       const message = error.message.toLowerCase();
       if (message.includes("rate") || message.includes("limit")) {
@@ -18,7 +31,10 @@ export async function POST(request: Request) {
       }
       return NextResponse.json({ error: "We could not send the verification email. Please try again later." }, { status: 502 });
     }
-    return NextResponse.json({ ok: true, message: "A verification code has been sent to your email. It expires according to the Supabase Auth email settings." });
+    if (data.user && data.user.identities?.length === 0) {
+      return NextResponse.json({ error: "This email is already registered. Please sign in instead." }, { status: 409 });
+    }
+    return NextResponse.json({ ok: true, message: "A verification code has been sent to your email." });
   } catch {
     return NextResponse.json({ error: "Unable to send a verification code." }, { status: 500 });
   }
