@@ -9,7 +9,7 @@ type Application={id:string;brandId:string;modelName:string;manufacturer:string;
 const MAX_UPLOAD_FILE=50*1024*1024;
 const MAX_UPLOAD_TOTAL=100*1024*1024;
 const MIME_BY_EXTENSION:Record<string,string>={mp4:"video/mp4",mov:"video/quicktime",webm:"video/webm",jpg:"image/jpeg",jpeg:"image/jpeg",png:"image/png",webp:"image/webp",pdf:"application/pdf"};
-function uploadResumable(file:File,path:string,accessToken:string,onProgress:(uploaded:number,total:number)=>void):Promise<void>{
+function uploadResumable(file:File,path:string,contentType:string,accessToken:string,onProgress:(uploaded:number,total:number)=>void):Promise<void>{
  const projectUrl=process.env.NEXT_PUBLIC_SUPABASE_URL;
  const apiKey=process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
  if(!projectUrl||!apiKey)throw new Error("Supabase upload settings are missing.");
@@ -57,7 +57,7 @@ export default function Brand(){
     const expected=MIME_BY_EXTENSION[extension];
     if(!expected||(item.kind==="video"?!["mp4","mov","webm"].includes(extension):!["jpg","jpeg","png","webp","pdf"].includes(extension)))throw new Error("Unsupported evidence file: "+item.file.name);
     if(item.file.size<1||item.file.size>MAX_UPLOAD_FILE)throw new Error("Each uploaded file must be 50 MB or smaller.");
-    if(item.file.type&&item.file.type!==expected)throw new Error("The file type does not match its extension: "+item.file.name);
+    if(item.file.type&&item.file.type!=="application/octet-stream"&&item.file.type!==expected)throw new Error("The file type does not match its extension: "+item.file.name);
     return {file:item.file,assetType:item.kind==="video"?"test_video" as const:"supporting_file" as const,contentType:expected,sortOrder:index};
    });
    const {data:{user},error:userError}=await supabase.auth.getUser();
@@ -68,7 +68,7 @@ export default function Brand(){
    const records=[];
    for(const asset of assets){
     const storagePath=user.id+"/"+applicationId+"/"+crypto.randomUUID()+"."+asset.file.name.split(".").pop()!.toLowerCase();
-    await uploadResumable(asset.file,storagePath,session.access_token,(uploaded,total)=>{
+    await uploadResumable(asset.file,storagePath,asset.contentType,session.access_token,(uploaded,total)=>{
      setUploadProgress(Math.min(99,Math.round(((completedBytes+uploaded)/totalBytes)*100)));
     });
     uploadedPaths.push(storagePath);
