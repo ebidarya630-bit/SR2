@@ -14,13 +14,10 @@ export async function POST(request:Request){
   const founded=String(body.foundedOn??"").trim();
   if(!legal||!display||!/^\S+@\S+\.\S+$/.test(email))return NextResponse.json({error:"Legal name, display name and a valid official email are required."},{status:400});
   if(website){try{const u=new URL(website);if(!["http:","https:"].includes(u.protocol))throw new Error();}catch{return NextResponse.json({error:"Website must be a valid http or https URL."},{status:400});}}
+  if(founded&&!/^\d{4}-\d{2}-\d{2}$/.test(founded))return NextResponse.json({error:"Enter a valid founding date."},{status:400});
   const supabase=await createClient();
-  const {data:brand,error:brandError}=await supabase.from("brands").insert({owner_user_id:user.id,legal_name:legal,display_name:display,official_email:email,website_url:website||null,founded_on:founded||null,status:"pending"}).select("id").single();
-  if(brandError||!brand)return NextResponse.json({error:"Could not create the brand. Check whether you already registered it."},{status:400});
-  const {error:memberError}=await supabase.from("brand_members").insert({brand_id:brand.id,user_id:user.id,member_role:"owner"});
-  if(memberError){await supabase.from("brands").delete().eq("id",brand.id);return NextResponse.json({error:"Could not finish setting up brand access."},{status:400});}
-  const {error:requestError}=await supabase.from("bsc_code_requests").insert({brand_id:brand.id,requested_by:user.id,contact_email:email,status:"pending"});
-  if(requestError){await supabase.from("brands").delete().eq("id",brand.id);return NextResponse.json({error:"Could not create the BSC verification request."},{status:400});}
-  return NextResponse.json({ok:true,brandId:brand.id,message:"Brand submitted for manual review. A BSC request has also been created."});
+  const {data:brandId,error}=await supabase.rpc("register_brand",{p_legal_name:legal,p_display_name:display,p_official_email:email,p_website_url:website||null,p_founded_on:founded||null});
+  if(error||!brandId)return NextResponse.json({error:"Could not submit the brand. Check the details and try again."},{status:400});
+  return NextResponse.json({ok:true,brandId,message:"Brand submitted for manual review. A BSC request has also been created."});
  }catch{return NextResponse.json({error:"Could not submit the brand. Please try again."},{status:400});}
 }
