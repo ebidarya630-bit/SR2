@@ -1,1 +1,11 @@
-import Link from"next/link";import{redirect}from"next/navigation";import{createClient}from"@/lib/supabase/server";export default async function Dashboard(){const s=await createClient();const{data:{user}}=await s.auth.getUser();if(!user)redirect("/login");const{data:p}=await s.from("profiles").select("role,is_blocked").eq("id",user.id).maybeSingle();if(p?.is_blocked)redirect("/login");if(p?.role==="admin")redirect("/admin");return <main className="shell dashboard"><Link className="logo" href="/">SR<span>.</span></Link><h1>Your SR dashboard</h1><p className="muted">Signed in as {user.email}</p><div className="cards"><article className="card"><h3>Complete your profile</h3><p>Choose a username after confirming your email.</p></article><article className="card"><h3>Brand portal</h3><p>Register your brand and request a BSC code.</p><Link href="/brand">Open brand portal →</Link></article><article className="card"><h3>Support</h3><p>Contact the SR team.</p><Link href="/support">Get support →</Link></article></div></main>;}
+import Link from "next/link";
+import {redirect} from "next/navigation";
+import {getSession} from "@/lib/auth";
+import {db} from "@/lib/db";
+export const runtime="nodejs";
+export default async function Dashboard(){
+ const user=await getSession();if(!user)redirect("/login");if(user.role==="admin")redirect("/admin");
+ const brandCount=(db.prepare("SELECT count(*) n FROM brands WHERE owner_user_id=?").get(user.id) as {n:number}).n;
+ const ticketCount=(db.prepare("SELECT count(*) n FROM support_tickets WHERE created_by=?").get(user.id) as {n:number}).n;
+ return <main className="shell dashboard"><Link className="logo" href="/">SR<span>.</span></Link><h1>Your SR dashboard</h1><p className="muted">Signed in as {user.email} · @{user.username}</p><div className="cards"><article className="card"><h3>Your brands</h3><h2 style={{color:"var(--orange)"}}>{brandCount}</h2><p>Brands connected to your account.</p><Link href="/brand">Open brand portal →</Link></article><article className="card"><h3>Support tickets</h3><h2 style={{color:"var(--orange)"}}>{ticketCount}</h2><p>Your support requests.</p><Link href="/support">Get support →</Link></article><article className="card"><h3>Public registry</h3><p>Search verified SR certificates.</p><Link href="/phones">Browse phones →</Link></article></div><form action="/api/auth/logout" method="post" style={{marginTop:24}}><button className="btn secondary">Sign out</button></form></main>;
+}
