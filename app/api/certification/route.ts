@@ -11,7 +11,7 @@ async function saveFile(file:File,kind:string,applicationId:string){
  const ext=path.extname(file.name).toLowerCase();
  const allowed=kind==="video"?[".mp4",".mov",".webm"]:[".jpg",".jpeg",".png",".webp",".pdf"];
  if(!allowed.includes(ext))throw new Error("Unsupported file type: "+file.name);
- const dir=path.join(process.cwd(),"data","uploads",applicationId);
+ const dir=path.join(process.env.UPLOADS_DIR||path.join(process.cwd(),"data","uploads"),applicationId);
  await fs.mkdir(dir,{recursive:true});
  const filename=randomUUID()+ext;
  await fs.writeFile(path.join(dir,filename),Buffer.from(await file.arrayBuffer()),{flag:"wx"});
@@ -49,7 +49,7 @@ export async function POST(request:Request){
     for(const item of saved)asset.run(randomUUID(),id,item.kind,item.storedPath,item.originalName,item.mimeType,item.size);
    });
    insert();
-  }catch(e){await fs.rm(path.join(process.cwd(),"data","uploads",id),{recursive:true,force:true});throw e;}
+  }catch(e){await fs.rm(path.join(process.env.UPLOADS_DIR||path.join(process.cwd(),"data","uploads"),id),{recursive:true,force:true});throw e;}
   return NextResponse.json({ok:true,applicationId:id,message:"Certification application submitted for review."});
  }catch(e){return NextResponse.json({error:e instanceof Error?e.message:"Unable to submit application."},{status:400});}
 }
