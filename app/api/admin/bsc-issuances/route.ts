@@ -3,7 +3,6 @@ import {createHash,randomBytes} from "node:crypto";
 import {getSession} from "@/lib/auth";
 import {createClient} from "@/lib/supabase/server";
 export const runtime="nodejs";
-
 export async function POST(request:Request){
  const admin=await getSession();if(!admin||admin.role!=="admin")return NextResponse.json({error:"Forbidden"},{status:403});
  try{
@@ -21,7 +20,7 @@ export async function POST(request:Request){
   const {data:issuance,error}=await supabase.from("bsc_issuances").insert({brand_id:brandId,request_id:requestRow?.id??null,bsc_code:code,claim_token_hash:tokenHash,expires_at:expires,created_by:admin.id}).select("id").single();
   if(error)return NextResponse.json({error:"That BSC code may already be issued. Choose another suffix."},{status:409});
   await supabase.from("admin_audit_logs").insert({admin_id:admin.id,action:"bsc_claim_link_created",target_type:"brand",target_id:brandId,details:{issuanceId:issuance.id,code,expires}});
-  const base=(process.env.APP_URL||new URL(request.url).origin).replace(/\\/$/,"");
+  const base=(process.env.APP_URL||new URL(request.url).origin).replace(/\/$/,"");
   return NextResponse.json({ok:true,brandName:brand.display_name,officialEmail:brand.official_email,bscCode:code,claimUrl:base+"/bsc/claim?token="+encodeURIComponent(token),expiresAt:expires});
  }catch{return NextResponse.json({error:"Unable to create BSC claim link."},{status:500});}
 }
