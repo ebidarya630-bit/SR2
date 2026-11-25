@@ -30,13 +30,14 @@ export async function POST(request:Request){
   const nits=Number(form.get("nits"));const lux=Number(form.get("lux"));
   const notes=String(form.get("testNotes")??"").trim().slice(0,5000);
   const consent=form.get("archiveConsent")==="on"?1:0;
-  const member=await first<{id:string;status:string;bsc_code:string|null}>("SELECT b.id,b.status,b.bsc_code FROM brands b JOIN brand_members m ON m.brand_id=b.id WHERE b.id=? AND m.user_id=?",brandId,user.id);
+  const member=await first<{id:string;status:string;bsc_code:string|null;member_role:string}>("SELECT b.id,b.status,b.bsc_code,m.member_role FROM brands b JOIN brand_members m ON m.brand_id=b.id WHERE b.id=? AND m.user_id=?",brandId,user.id);
   if(!member)return NextResponse.json({error:"You do not have access to this brand."},{status:403});
   if(member.status!=="verified"||!member.bsc_code)return NextResponse.json({error:"The brand must be verified and have an active BSC code before submitting a certification."},{status:400});
+  if(!["owner","manager","reviewer"].includes(member.member_role))return NextResponse.json({error:"Your brand role does not have permission to submit evaluation applications."},{status:403});
   if(!manufacturer||!model)return NextResponse.json({error:"Manufacturer and full model name are required."},{status:400});
   if(!Number.isFinite(nits)||nits<=0||nits>100000||!Number.isFinite(lux)||lux<=0||lux>1000000)return NextResponse.json({error:"Enter valid measured nits and lux values."},{status:400});
   if(!notes)return NextResponse.json({error:"Describe the test setup and measurement conditions."},{status:400});
-  if(!consent)return NextResponse.json({error:"Please confirm the device-return and archive terms before submitting."},{status:400});
+
   const video=form.get("testVideo");const images=form.getAll("evidence").filter((x):x is File=>x instanceof File&&x.size>0);
   if(!(video instanceof File)||video.size===0)return NextResponse.json({error:"A complete test video is required."},{status:400});
   if(images.length<1||images.length>12)return NextResponse.json({error:"Upload between 1 and 12 evidence images or PDFs."},{status:400});
