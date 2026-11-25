@@ -1,24 +1,39 @@
-# SR2 setup guide
+# SR2 setup and deployment
 
-## 1. Create the Supabase project
-Create a project in Supabase and copy its Project URL, anon/public key and service_role key from Project Settings → API.
+## Architecture
 
-## 2. Apply the database migration
-Use Supabase CLI and apply every SQL migration in `supabase/migrations/` in filename order. The initial schema is followed by security hardening and BSC-claim binding migrations. Review the SQL against your Supabase project's current state before applying it to production. The migrations create tables, indexes, row-level security policies, guarded write triggers, and the one-time BSC claim RPC.
+SR2 currently uses Next.js with a local SQLite database (better-sqlite3), bcrypt password hashing, and signed HTTP-only sessions. Supabase is not required.
 
-## 3. Configure email confirmation
-In Supabase Authentication settings enable email/password sign-up and email confirmation. Configure a production SMTP provider and customize the confirmation email template. Do not use a personal mailbox password as an SMTP credential.
+## Local development
 
-## 4. Configure the app
-Copy .env.example to .env.local and fill in the Supabase URL and anon key. Keep SUPABASE_SERVICE_ROLE_KEY server-only. Never commit .env.local.
+1. Install Node.js 20 or newer.
+2. Copy `.env.example` to `.env.local`.
+3. Set a unique `SESSION_SECRET` (at least 32 characters).
+4. Set a new private `ADMIN_PASSWORD` (at least 14 characters).
+5. Run `npm install`.
+6. Run `npm run admin:provision` once to create the administrator.
+7. Run `npm run dev` and open `http://localhost:3000`.
 
-## 5. Provision the administrator
-Choose a NEW strong password that has never been shared in chat. Put ADMIN_EMAIL and ADMIN_PASSWORD temporarily in .env.local, alongside SUPABASE_SERVICE_ROLE_KEY. Run npm install, then npm run admin:provision. The script creates or updates the auth user and sets profiles.role to admin. Remove ADMIN_PASSWORD from the environment after the command finishes. The admin signs in through the normal /login page and is routed to /admin.
+The database is created automatically at `DATABASE_PATH`. Uploaded evidence is stored under `UPLOADS_DIR`.
 
-The script uses the service-role key and must only run in a trusted local/server environment. Never expose that key to the browser.
+## Render deployment
 
-## 6. Run locally
-Run npm run dev and open http://localhost:3000.
+The repository includes `render.yaml`, a Render Blueprint for a Node web service with a persistent disk. The disk is required because SQLite and uploaded certification evidence must survive restarts and deployments.
 
-## Current implementation status
-The public landing page, basic email/password registration and login, confirmation callback, user dashboard shell, protected admin dashboard shell and brand/about/support/phone-registry information pages are included. Database hardening and the atomic one-time BSC claim function are present in follow-up migrations. Supabase project provisioning, SMTP configuration, server-side BSC issuance/email delivery, full brand onboarding, complete admin workflows, ticket messaging, username setup, translations, phone search and certificate issuance still require implementation and deployment. The SR scoring method is a draft and must not be used to issue numerical scores until independently validated.
+1. Open the Render Blueprint dashboard and connect this GitHub repository: https://dashboard.render.com/blueprints
+2. Select the `main` branch and review the Blueprint.
+3. Set `ADMIN_PASSWORD` to a new unique password when prompted. Do not reuse any password previously shared in chat.
+4. Apply the Blueprint. Render generates `SESSION_SECRET` automatically.
+5. After the service is live, open its Shell and run `npm run admin:provision` once. This creates the admin user in the persistent SQLite database.
+6. Sign in at `/login`.
+
+The Blueprint uses a paid Starter web service because Render persistent disks require a paid service. The disk is mounted at `/var/data`, with the SQLite file and uploads stored beneath it. A disk-backed service runs as a single instance and deploys may cause a brief interruption. Review current Render pricing before applying.
+
+## Important operational notes
+
+- Back up the SQLite database regularly using SQLite's online backup API or another database-consistent backup procedure. Do not rely solely on filesystem snapshots.
+- Keep `SESSION_SECRET` and `ADMIN_PASSWORD` private. Never commit `.env.local` or real credentials.
+- Email verification, password reset, rate limiting, automated BSC issuance emails, and full support messaging still need implementation.
+- Certification evidence uploads are stored on the persistent disk. Access-controlled download endpoints and retention controls still need to be completed before accepting sensitive production evidence.
+- The SR scoring methodology is not independently validated. Do not issue numerical SR scores or certificates until a repeatable protocol and scoring model have been independently validated.
+- Physical device shipment is optional and requires a separate, explicit agreement before shipping.
