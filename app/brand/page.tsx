@@ -1,7 +1,6 @@
 "use client";
 import Link from "next/link";
 import {useEffect,useState} from "react";
-import * as tus from "tus-js-client";
 import {createClient} from "@/lib/supabase/client";
 type Brand={id:string;legalName:string;displayName:string;officialEmail:string;websiteUrl:string|null;bscCode:string|null;status:string;createdAt:string};
 type Application={id:string;brandId:string;modelName:string;manufacturer:string;modelNumber:string|null;status:string;createdAt:string};
@@ -9,7 +8,8 @@ type Application={id:string;brandId:string;modelName:string;manufacturer:string;
 const MAX_UPLOAD_FILE=50*1024*1024;
 const MAX_UPLOAD_TOTAL=100*1024*1024;
 const MIME_BY_EXTENSION:Record<string,string>={mp4:"video/mp4",mov:"video/quicktime",webm:"video/webm",jpg:"image/jpeg",jpeg:"image/jpeg",png:"image/png",webp:"image/webp",pdf:"application/pdf"};
-function uploadResumable(file:File,path:string,contentType:string,accessToken:string,onProgress:(uploaded:number,total:number)=>void):Promise<void>{
+async function uploadResumable(file:File,path:string,contentType:string,accessToken:string,onProgress:(uploaded:number,total:number)=>void):Promise<void>{
+ const tus=await import("tus-js-client");
  const projectUrl=process.env.NEXT_PUBLIC_SUPABASE_URL;
  const apiKey=process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
  if(!projectUrl||!apiKey)throw new Error("Supabase upload settings are missing.");
