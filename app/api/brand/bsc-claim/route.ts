@@ -1,7 +1,7 @@
 import {NextResponse} from "next/server";
 import {createHash} from "node:crypto";
 import {getSession} from "@/lib/auth";
-import {first,batch} from "@/lib/db";
+import {first,run,batch} from "@/lib/db";
 export const runtime="nodejs";
 export async function POST(request:Request){
  const user=await getSession();if(!user)return NextResponse.json({error:"Sign in with the brand account before claiming this code."},{status:401});
@@ -14,8 +14,10 @@ export async function POST(request:Request){
   const member=await first("SELECT 1 AS found FROM brand_members WHERE brand_id=? AND user_id=?",row.brand_id,user.id);
   if(!member)return NextResponse.json({error:"This account is not an authorized member of the brand linked to this BSC invitation."},{status:403});
   if(row.status==="suspended")return NextResponse.json({error:"This brand is suspended and cannot claim a BSC code."},{status:400});
+  // Claim the one-time token first. Only the request that changes exactly one row may continue.
+  const claimed=await run("UPDATE bsc_issuances SET claimed_at=CURRENT_TIMESTAMP WHERE id=? AND claimed_at IS NULL AND expires_at>?",row.id,new Date().toISOString());
+  if((claimed.meta.changes??0)!==1)return NextResponse.json({error:"This BSC link has already been used or expired."},{status:409});
   await batch([
-   {sql:"UPDATE bsc_issuances SET claimed_at=CURRENT_TIMESTAMP WHERE id=? AND claimed_at IS NULL",values:[row.id]},
    {sql:"UPDATE brands SET status='verified',bsc_code=? WHERE id=?",values:[row.bsc_code,row.brand_id]},
    {sql:"UPDATE bsc_code_requests SET status='approved',admin_note='BSC code claimed using the one-time email invitation.' WHERE brand_id=? AND status='pending'",values:[row.brand_id]},
    {sql:"INSERT INTO admin_audit_logs(admin_id,action,target_type,target_id,details) VALUES(NULL,'bsc_code_claimed','brand',?,?)",values:[row.brand_id,JSON.stringify({userId:user.id,issuanceId:row.id,code:row.bsc_code})]}
