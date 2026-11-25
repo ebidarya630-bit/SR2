@@ -12,7 +12,7 @@ export async function POST(request:Request){
   const email=String(body.officialEmail??"").trim().toLowerCase().slice(0,254);
   const website=String(body.websiteUrl??"").trim().slice(0,300);
   const founded=String(body.foundedOn??"").trim();
-  if(!legal||!display||!/^\\S+@\\S+\\.\\S+$/.test(email))return NextResponse.json({error:"Legal name, display name and a valid official email are required."},{status:400});
+  if(!legal||!display||!/^\S+@\S+\.\S+$/.test(email))return NextResponse.json({error:"Legal name, display name and a valid official email are required."},{status:400});
   if(website){try{const u=new URL(website);if(!["http:","https:"].includes(u.protocol))throw new Error();}catch{return NextResponse.json({error:"Website must be a valid http or https URL."},{status:400});}}
   const supabase=await createClient();
   const {data:brand,error:brandError}=await supabase.from("brands").insert({owner_user_id:user.id,legal_name:legal,display_name:display,official_email:email,website_url:website||null,founded_on:founded||null,status:"pending"}).select("id").single();
